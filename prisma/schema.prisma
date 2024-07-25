@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model roles {
+  id Int @id @default(autoincrement())
+  description String
+  users users[]
+}
+
+model users {
+  id Int @id @default(autoincrement())
+  email String @unique
+  password String
+  date_joined DateTime @default(now())
+  user_role_id Int
+  user_role roles @relation(fields: [user_role_id], references: [id])
+  is_active Boolean
+  last_login DateTime
+
+  comentary comentary[]
+  starred_project starred_projects[]
+  owner projects[]
+  following followers[] @relation("Following")
+  followers followers[] @relation("Followers")
+  collaborations collaborations[]
+}
+
+model labels {
+  id Int @id @default(autoincrement())
+  description String
+  projects labeled_projects[]
+}
+
+model projects {
+  id Int @id @default(autoincrement())
+  content String
+  owner_id Int
+  owner users @relation(fields: [owner_id], references: [id])
+  name String
+  version String
+
+  comentary_project comentary[]
+  starred_project starred_projects[]
+  collaboration_project collaborations[]
+  labels labeled_projects[]
+}
+
+model labeled_projects {
+  project_id Int
+  project projects @relation(fields: [project_id], references: [id])
+  label_id Int
+  label labels @relation(fields: [label_id], references: [id])
+
+  @@id([project_id, label_id])
+}
+
+model followers {
+  user_id Int
+  user users @relation("Following" , fields: [user_id], references: [id])
+  follower_id Int
+  follower users @relation("Followers",fields: [follower_id], references: [id]) 
+
+  @@id([user_id, follower_id])
+}
+
+model collaborations {
+  user_id Int
+  user users @relation(fields: [user_id], references: [id])
+  project_id Int
+  project projects @relation(fields: [project_id], references: [id])
+
+  @@id([user_id, project_id])
+}
+
+
+model starred_projects {
+  user_id Int 
+  user users @relation(fields: [user_id], references: [id])
+  project_id Int 
+  project projects @relation(fields: [project_id], references: [id])
+
+  @@id([user_id, project_id])
+}
+
+model comentary {
+  id Int @id @default(autoincrement())
+  project_id Int
+  project projects @relation(fields: [project_id], references: [id])
+  user_id Int
+  user users @relation(fields: [user_id], references: [id])
+  date DateTime @default(now())
+  content String 
+}
