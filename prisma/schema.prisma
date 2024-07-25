@@ -1,34 +1,40 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+//-------------Actualizaciones 25/07/2024-------------//
+// Codigo comentado
+// Se definió los valores por defecto de ciertos campos.
+// A roles y a labels se le quitó el autoincrement en su pk
+// Se añadió un campo para el nombre en users.
 
 generator client {
   provider = "prisma-client-js"
 }
 
+//------------- Conexión a la bd -------------//
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL") //<--- Lee la variable "DATABASE_URL" desde el archivo .env
 }
 
+//------------- Roles -------------//
 model roles {
-  id Int @id @default(autoincrement())
+  id Int @id 
   description String
   users users[]
 }
 
+//------------- Modelo de login --------------//
 model users {
   id Int @id @default(autoincrement())
   email String @unique
   password String
+  name String
   date_joined DateTime @default(now())
-  user_role_id Int
+  user_role_id Int @default(0) //Los usuarios serán por defecto tipo usuario. Si queremos que alguien sea admin, otro admin lo establecerá desde algún menú. Para establecer el primer usuario tipo admin, debemos hacerlo desde la bd.
   user_role roles @relation(fields: [user_role_id], references: [id])
-  is_active Boolean
+  is_active Boolean @default(true)
   last_login DateTime
 
+  // Relaciones inversas
+  // Prisma requiere que se indeque cuando un dato de la propia tabla se use desde otra tabla para que se pueda entender como están conectados los modelos entre sí.
   comentary comentary[]
   starred_project starred_projects[]
   owner projects[]
@@ -37,63 +43,80 @@ model users {
   collaborations collaborations[]
 }
 
+//------------- Etiquetas -------------//
 model labels {
-  id Int @id @default(autoincrement())
+  id Int @id
   description String
+  // Relaciones inversas
   projects labeled_projects[]
 }
 
+//------------- Proyectos -------------//
 model projects {
   id Int @id @default(autoincrement())
   content String
   owner_id Int
   owner users @relation(fields: [owner_id], references: [id])
-  name String
+  name String @default("Nombre_proyecto") // Nombre por defecto de los proyectos.
   version String
 
+  // Relaciones inversas
   comentary_project comentary[]
   starred_project starred_projects[]
   collaboration_project collaborations[]
   labels labeled_projects[]
 }
 
+//------------- Etiquetas de los proyectos -------------//
 model labeled_projects {
   project_id Int
   project projects @relation(fields: [project_id], references: [id])
   label_id Int
   label labels @relation(fields: [label_id], references: [id])
 
+  // Antiduplicador
+  // En las tablas de relación (de muchos a muchos), es necesario esto para que no se dupliquen las combinaciones.
+  // En esta tabla se usa para que un proyecto no pueda tener la misma etiqueta más de 1 vez. Si la misma etiqueta se repite en un proyecto, sale error.
+  // También para que una etiqueta no pueda estár presente en un proyecto más de 1 vez.
   @@id([project_id, label_id])
 }
 
+//------------- Seguidores de los usuarios -------------//
 model followers {
   user_id Int
   user users @relation("Following" , fields: [user_id], references: [id])
   follower_id Int
   follower users @relation("Followers",fields: [follower_id], references: [id]) 
 
+  // Antiduplicador
+  // para que un usuario no pueda ser seguido mas de 1 vez por el mismo usuario.
+  // También para que un usuario no pueda seguir al mismo usuario más de 1 vez.
   @@id([user_id, follower_id])
 }
 
+//------------- Proyectos en los que un usuario puede colaborar -------------//
 model collaborations {
   user_id Int
   user users @relation(fields: [user_id], references: [id])
   project_id Int
   project projects @relation(fields: [project_id], references: [id])
 
+  // Antiduplicador
   @@id([user_id, project_id])
 }
 
-
+//------------- Proyectos marcados como favoritos -------------//
 model starred_projects {
   user_id Int 
   user users @relation(fields: [user_id], references: [id])
   project_id Int 
   project projects @relation(fields: [project_id], references: [id])
 
+  // Antiduplicador
   @@id([user_id, project_id])
 }
 
+//------------- Comentarios en los proyectos -------------//
 model comentary {
   id Int @id @default(autoincrement())
   project_id Int

@@ -1,0 +1,6 @@
+------------------ ROLES ------------------
+INSERT INTO roles (id, description) VALUES(0, 'Usuario');
+INSERT INTO roles (id, description) VALUES(1, 'Administrador');
+
+------------------ LABELS ------------------
+INSERT INTO labels (id, description) VALUES (0, '');
