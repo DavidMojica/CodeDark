@@ -9,9 +9,17 @@ generator client {
 }
 
 //------------- Conexión a la bd -------------//
+//local -- Descomentar cuando se esté trabajando en local y comentar producción 
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("DATABASE_URL") //<--- Lee la variable "DATABASE_URL" desde el archivo .env
+// }
+
+//Produccion -- Descomentar para updates en produccion y  local -- npx prisma db push para sincronizar la bd de producción
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") //<--- Lee la variable "DATABASE_URL" desde el archivo .env
+  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 }
 
 //------------- Roles -------------//
